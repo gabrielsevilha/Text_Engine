@@ -1,10 +1,11 @@
 # Text_Engine
 
-This Library is a unique header file, that serves that a fast way to draw text using OpenGL and freetype2, and serves also as example of freetype2 library. </br>
+This is a unique header library, that serves that a fast way to draw text using OpenGL and freetype2, and serves also as example of freetype2 library. </br>
 The code are write using OpenGL Imediate Mode because beside a library, this code need be understandeble to learn freetype2, and also be used in low-end computers. </br>
 
 Dependences: OpenGL 1.1 and freetype2
   
+  - This library use OpenGL Imediate Mode. </br>
   - You need orthographic projection matrix, you get this with: </br>
     - `glOrtho(0,view_port_width,view_port_height,0,0,1);` </br>
   - You need load OpenGL functions before include this library, as the exemple bellow. </br>
@@ -43,6 +44,6 @@ int main(){
 	
 }
 ```
-Exemple was compiled with: -lglfw3 -lGL \`pkg-config --cflags --libs freetype2\` </br>
+Exemple was compiled with: -lglfw -lGL \`pkg-config --cflags --libs freetype2\` </br>
 
-Obs: (Of course, glfw3 is opitional for this library, but only make sure that OpenGL 1.1 funcions was loaded.) </br>
+Obs: Of course, glfw3 is opitional for this library, but only make sure that OpenGL 1.1 funcions was loaded. </br>
