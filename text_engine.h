@@ -91,7 +91,7 @@ typedef struct{
 
 typedef struct{
 
-	int size;
+	int size, tab_size;
 	Letter letters[255];
 
 }Font;
@@ -100,6 +100,7 @@ Font* createFont(const char* font_name, int size){
 
 	Font* font = (Font*)malloc(sizeof(Font));
 	font->size = size;
+	font->tab_size = 4;
 	
 	FT_Library ft;
 	FT_Init_FreeType(&ft);
@@ -134,19 +135,23 @@ Font* createFont(const char* font_name, int size){
 	return font;
 }
 
+void setTabSize(Font* font, const int tab_size){
+	font->tab_size = tab_size;
+}
+
 void drawText(Font* font, const char* text, int x, int y){
 
-	unsigned int is_gltexture2d_active;
+	int is_gltexture2d_active;
 	glGetIntegerv(GL_TEXTURE_2D,&is_gltexture2d_active);
 	if(!is_gltexture2d_active)
 		glEnable(GL_TEXTURE_2D);
 		
-	unsigned int is_glblend_active;
+	int is_glblend_active;
 	glGetIntegerv(GL_BLEND,&is_glblend_active);
 	if(!is_glblend_active)
 		glEnable(GL_BLEND);
 
-	unsigned int temp_gl_blend_src, temp_gl_blend_dst;
+	int temp_gl_blend_src, temp_gl_blend_dst;
 	glGetIntegerv(GL_BLEND_SRC,&temp_gl_blend_src);
 	glGetIntegerv(GL_BLEND_DST,&temp_gl_blend_dst);
 	if(temp_gl_blend_src != GL_SRC_ALPHA || temp_gl_blend_dst != GL_ONE_MINUS_SRC_ALPHA)
@@ -160,6 +165,10 @@ void drawText(Font* font, const char* text, int x, int y){
 		
 			line += font->size;
 			x = initial_x;
+			
+		}else if(text[i] == '	'){
+		
+			x += font->letters[31].width * font->tab_size;
 			
 		}else{
 		
