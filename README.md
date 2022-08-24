@@ -1,6 +1,6 @@
 # Text_Engine
 
-This is a unique header library, that serves that a fast way to draw text using OpenGL and freetype2, and serves also as example of freetype2 library. </br>
+This is a unique header library, that serves as a fast way to draw text using OpenGL and freetype2, and serves also as example of freetype2 library. </br>
 
 Dependences: OpenGL 1.1+ and FreeType2
   
