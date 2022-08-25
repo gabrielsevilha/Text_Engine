@@ -255,15 +255,19 @@ Font* createFont(const char* font_name, int size){
 	//Setting Vertex Array
 	float vertex[] = {
 		0.0,0.0,
+		1.0,0.0,
 		0.0,1.0,
-		1.0,1.0,
-		1.0,0.0
+		1.0,0.0,
+		0.0,1.0,
+		1.0,1.0
 	};
 	float uv[] = {
 		0.0,0.0,
+		1.0,0.0,
 		0.0,1.0,
-		1.0,1.0,
-		1.0,0.0
+		1.0,0.0,
+		0.0,1.0,
+		1.0,1.0
 	};
 	
 	glGenVertexArrays(1,&font->vertex_array);
@@ -272,12 +276,12 @@ Font* createFont(const char* font_name, int size){
 	unsigned int vbo[2];
 	glGenBuffers(2,vbo);
 	glBindBuffer(GL_ARRAY_BUFFER,vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER,sizeof(float)*8,vertex,GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER,sizeof(float)*12,vertex,GL_STATIC_DRAW);
 	glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,0,0);
 	glEnableVertexAttribArray(0);
 	
 	glBindBuffer(GL_ARRAY_BUFFER,vbo[1]);
-	glBufferData(GL_ARRAY_BUFFER,sizeof(float)*8,uv,GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER,sizeof(float)*12,uv,GL_STATIC_DRAW);
 	glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,0,0);
 	glEnableVertexAttribArray(1);
 	
@@ -342,7 +346,7 @@ void drawText(Font* font, const unsigned char* text, int x, int y){
 
 			glBindTexture(GL_TEXTURE_2D,font->letters[(int)text[i]].texture);
 			
-			glDrawArrays(GL_QUADS,0,4);
+			glDrawArrays(GL_TRIANGLES,0,6);
 			
 			x += font->letters[(int)text[i]].advance>>6;
 			
