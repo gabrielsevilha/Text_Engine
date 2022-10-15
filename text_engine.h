@@ -51,7 +51,7 @@ int main(){
 		
 		glClear(GL_COLOR_BUFFER_BIT);
 		
-		drawText(font, "Hello, World!", getTextAlignCenter(font,"Hello, World!",400), 600/2-font->size);
+		drawText(font, "Hello, World!", getTextAlignCenter(font,"Hello, World!",400), 600/2-getFontHeight(font));
     
 		glfwSwapBuffers(window);
 		
@@ -86,6 +86,7 @@ REFERENCE:
 	void setFontScale(Font* font, float scale); //Scale is not equal as font pixels size
 	void setFontScaleInPixels(Font* font, float scale_in_pixels); //Simulate pixels size on scale
 	int getSizeText(Font* font,const char* text);
+	int getFontHeight(Font* font); //Return font->size * font->scale_y;
 	int getTextAlignRight(Font* font, const unsigned char* text, int position_x);
 	int getTextAlignCenter(Font* font, const unsigned char* text, int position_x);
 
@@ -383,16 +384,16 @@ Font* createFont(const char* font_name, int size){
 	//Setting Vertex Array
 	float vertex[] = {
 		0.0,0.0,
-		1.0,0.0,
 		0.0,1.0,
+		1.0,0.0,
 		1.0,0.0,
 		0.0,1.0,
 		1.0,1.0
 	};
 	float uv[] = {
 		0.0,0.0,
-		1.0,0.0,
 		0.0,1.0,
+		1.0,0.0,
 		1.0,0.0,
 		0.0,1.0,
 		1.0,1.0
@@ -719,6 +720,12 @@ int getSizeText(Font* font,const char* text){
 	if(max_width < x) max_width = x;
 	
 	return max_width * font->scale_x;
+}
+
+int getFontHeight(Font* font){
+	
+	return font->size * font->scale_y;	
+	
 }
 
 int getTextAlignRight(Font* font, const unsigned char* text, int position_x){
