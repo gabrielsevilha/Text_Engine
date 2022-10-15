@@ -28,7 +28,7 @@ int main(){
 		
 		glClear(GL_COLOR_BUFFER_BIT);
 		
-		drawText(font, "Hello, World!", 800/2-getSizeText(font,"Hello, World!")/2, 600/2-font->size);
+		drawText(font, "Hello, World!", getTextAlignCenter(font,"Hello, World!",400), 600/2-getFontHeight(font));
     
 		glfwSwapBuffers(window);
 		
