@@ -4,11 +4,11 @@ This is a unique header library, that serves as a fast way to draw text using Op
 
 Dependences: OpenGL 1.1+ and FreeType2
   
-  - You need load OpenGL functions before include this library, as the exemple bellow. </br>
-  - In the exemple OpenGL was loaded with Glfw3 library. </br>
+  - You need load OpenGL functions before include this library, as the example bellow. </br>
+  - In the example OpenGL was loaded with Glfw3 library. </br>
 
 
-Exemple with glfw3:
+Example with glfw3:
 ```C
 
 #include<GLFW/glfw3.h>
@@ -41,6 +41,6 @@ int main(){
 }
 
 ```
-Exemple was compiled with: -lglfw -lGL \`pkg-config --cflags --libs freetype2\` </br>
+Example was compiled with: -lglfw -lGL \`pkg-config --cflags --libs freetype2\` </br>
 
 Obs: (Of course, glfw3 is opitional for this library, but just make sure that OpenGL funcions was loaded). </br>
