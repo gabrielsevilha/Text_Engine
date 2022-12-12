@@ -465,7 +465,7 @@ void drawText(Font* font, const unsigned char* text, int x, int y){
 
 	int initial_x = x, initial_y = y, line = font->size;
 	
-	for(int i = 0; i < strlen((char*)text); i++){
+	for(unsigned int i = 0; i < strlen((char*)text); i++){
 	
 		if(text[i] == '\n'){
 		
@@ -708,7 +708,7 @@ int getSizeText(Font* font,const unsigned char* text){
 	int max_width = 0;
 	int x = 0;
 	
-	for(int i = 0; i < strlen((char*)text); i++){
+	for(unsigned int i = 0; i < strlen((char*)text); i++){
 	
 		if(text[i] == '\n'){
 			if(max_width < x) max_width = x;
