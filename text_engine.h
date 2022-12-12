@@ -356,8 +356,8 @@ Font* createFont(const char* font_name, int size){
 	unsigned int vertex_shader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertex_shader,1,&vertex_shader_source,0);
 	glCompileShader(vertex_shader);
-	unsigned int success;
-	unsigned char infolog[512];
+	int success;
+	char infolog[512];
 	glGetShaderiv(vertex_shader,GL_COMPILE_STATUS,&success);
 	if(!success){
 		glGetShaderInfoLog(vertex_shader,512,0,infolog);
@@ -465,7 +465,7 @@ void drawText(Font* font, const unsigned char* text, int x, int y){
 
 	int initial_x = x, initial_y = y, line = font->size;
 	
-	for(int i = 0; i < strlen(text); i++){
+	for(int i = 0; i < strlen((char*)text); i++){
 	
 		if(text[i] == '\n'){
 		
@@ -703,12 +703,12 @@ void setFontScaleInPixels(Font* font, float scale_in_pixels){
 	font->scale_y = scale_in_pixels / (float)font->size;
 }
 
-int getSizeText(Font* font,const char* text){
+int getSizeText(Font* font,const unsigned char* text){
 
 	int max_width = 0;
 	int x = 0;
 	
-	for(int i = 0; i < strlen(text); i++){
+	for(int i = 0; i < strlen((char*)text); i++){
 	
 		if(text[i] == '\n'){
 			if(max_width < x) max_width = x;
