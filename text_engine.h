@@ -137,7 +137,7 @@ typedef struct{
 
 //============================== Some math functions ==============================
 
-void fontMultiplyMatrix4x4(float* m1, float* m2, float* dest){
+static void fontMultiplyMatrix4x4(float* m1, float* m2, float* dest){
 	
 	float a0 = m1[0], a1 = m1[1], a2 = m1[2], a3 = m1[3],
 	a4 = m1[4], a5 = m1[5], a6 = m1[6], a7 = m1[7],
@@ -171,14 +171,14 @@ void fontMultiplyMatrix4x4(float* m1, float* m2, float* dest){
 		
 }
 
-void fontIdentityMatrix4x4(float* m){
+static void fontIdentityMatrix4x4(float* m){
 	m[0] = 1.0, m[1] = 0.0, m[2] = 0.0, m[3] = 0.0,
 	m[4] = 0.0, m[5] = 1.0, m[6] = 0.0, m[7] = 0.0,
 	m[8] = 0.0, m[9] = 0.0, m[10] = 1.0, m[11] = 0.0,
 	m[12] = 0.0, m[13] = 0.0, m[14] = 0.0, m[15] = 1.0;
 }
 
-void fontTranslateMatrix4x4(float* m, float* v){
+static void fontTranslateMatrix4x4(float* m, float* v){
 	
 	float r[] = {
 		1.0,0.0,0.0,0.0,
@@ -191,7 +191,7 @@ void fontTranslateMatrix4x4(float* m, float* v){
 	
 }
 
-void fontScaleMatrix4x4(float* m, float* v){
+static void fontScaleMatrix4x4(float* m, float* v){
 
 	float r[] = {
 		v[0],0.0,0.0,0.0,
@@ -204,7 +204,7 @@ void fontScaleMatrix4x4(float* m, float* v){
 	
 }
 
-void fontRotateMatrix4x4(float* m, float angle, float* v){
+static void fontRotateMatrix4x4(float* m, float angle, float* v){
 
 	float c = cosf(angle);
 	float s = sinf(angle);
@@ -237,7 +237,7 @@ void fontRotateMatrix4x4(float* m, float angle, float* v){
 
 }
 
-void fontCreateOrthographicMatrix(float left, float right, float bottom, float top, float near, float far, float* matrix){
+static void fontCreateOrthographicMatrix(float left, float right, float bottom, float top, float near, float far, float* matrix){
 
 	float dif_right_left = right - left;
 	float dif_top_bottom = top - bottom;
@@ -257,7 +257,7 @@ void fontCreateOrthographicMatrix(float left, float right, float bottom, float t
 
 #ifdef TEXT_ENGINE_USE_MODERN_OPENGL
 
-Font* createFont(const char* font_name, int size){
+static Font* createFont(const char* font_name, int size){
 
 	Font* font = (Font*)malloc(sizeof(Font));
 	font->size = size;
@@ -420,7 +420,7 @@ Font* createFont(const char* font_name, int size){
 	return font;
 }
 
-void drawText(Font* font, const unsigned char* text, int x, int y){
+static void drawText(Font* font, const unsigned char* text, int x, int y){
 
 	glUseProgram(font->shader);
 	glBindVertexArray(font->vertex_array);
@@ -515,7 +515,7 @@ void drawText(Font* font, const unsigned char* text, int x, int y){
 
 //============================== If Using OpenGL Compatibility Mode (Imediate Mode) ==============================
 
-Font* createFont(const char* font_name, int size){
+static Font* createFont(const char* font_name, int size){
 
 	Font* font = (Font*)malloc(sizeof(Font));
 	font->size = size;
@@ -572,7 +572,7 @@ Font* createFont(const char* font_name, int size){
 	return font;
 }
 
-void drawText(Font* font, const unsigned char* text, int x, int y){
+static void drawText(Font* font, const unsigned char* text, int x, int y){
 
 	int matrix_mode;
 	glGetIntegerv(GL_MATRIX_MODE,&matrix_mode);
@@ -672,38 +672,38 @@ void drawText(Font* font, const unsigned char* text, int x, int y){
 
 #endif
 
-void setFontFreeTransform(Font* font, int free_transform){
+static void setFontFreeTransform(Font* font, int free_transform){
 	font->free_transform = free_transform;
 }
 
-void setFontColor(Font* font, float r, float g, float b, float a){
+static void setFontColor(Font* font, float r, float g, float b, float a){
 	font->color_r = r;
 	font->color_g = g;
 	font->color_b = b;
 	font->color_a = a;
 }
 
-void setFontCanvasSize(Font* font, int width, int height){
+static void setFontCanvasSize(Font* font, int width, int height){
 	font->canvas_width = width;
 	font->canvas_height = height;
 	fontCreateOrthographicMatrix(0,font->canvas_width,font->canvas_height,0,-1.0,1.0,font->projection_matrix);
 }
 
-void setTabSize(Font* font, const int tab_size){
+static void setTabSize(Font* font, const int tab_size){
 	font->tab_size = tab_size;
 }
 
-void setFontScale(Font* font, float scale){
+static void setFontScale(Font* font, float scale){
 	font->scale_x = scale;
 	font->scale_y = scale;
 }
 
-void setFontScaleInPixels(Font* font, float scale_in_pixels){
+static void setFontScaleInPixels(Font* font, float scale_in_pixels){
 	font->scale_x = scale_in_pixels / (float)font->size;
 	font->scale_y = scale_in_pixels / (float)font->size;
 }
 
-int getSizeText(Font* font,const unsigned char* text){
+static int getSizeText(Font* font,const unsigned char* text){
 
 	int max_width = 0;
 	int x = 0;
@@ -722,19 +722,19 @@ int getSizeText(Font* font,const unsigned char* text){
 	return max_width * font->scale_x;
 }
 
-int getFontHeight(Font* font){
+static int getFontHeight(Font* font){
 	
 	return font->size * font->scale_y;	
 	
 }
 
-int getTextAlignRight(Font* font, const unsigned char* text, int position_x){
+static int getTextAlignRight(Font* font, const unsigned char* text, int position_x){
 	
 	return position_x - getSizeText(font,text);
 	
 }
 
-int getTextAlignCenter(Font* font, const unsigned char* text, int position_x){
+static int getTextAlignCenter(Font* font, const unsigned char* text, int position_x){
 	
 	return position_x - (getSizeText(font,text) / 2);
 	
