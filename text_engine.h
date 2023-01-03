@@ -1,40 +1,50 @@
 /*
-.=================================================================================.
+===================================== LICENSE ============================================
 
-MIT License
+	MIT License
 
-Copyright (c) 2021-2022 Gabriel Sevilha
+	Copyright (c) 2021-2023 Gabriel Sevilha
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+	Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software"), to deal
+	in the Software without restriction, including without limitation the rights
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+	The above copyright notice and this permission notice shall be included in all
+	copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	SOFTWARE.
 
-.=================================================================================.
+==========================================================================================
+*/
 
-README:
+/*
+
+Text Engine 1.2.21
 
 This is a unique header library, that serves that a fast way to draw text using OpenGL and FreeType2, and serves also as example of freetype2 library.
 
 Dependences: OpenGL 1.1+ and freetype2
 
 You need load OpenGL functions before include this library, as the exemple bellow.
-In the exemple opengl was loaded with glfw3 library (Of course, glfw3 is opitional for this library):
+In the exemple OpenGL was loaded with glfw3 library (Of course, glfw3 is opitional for this library):
+
+//Exemple was compiled on linux with: -lglfw -lGL `pkg-config --cflags --libs freetype2`
+
+*/
+
+/*
 
 #include<GLFW/glfw3.h>
+
 #include"text_engine.h"
 
 int main(){
@@ -63,15 +73,14 @@ int main(){
 	
 }
 
-//Exemple was compiled with: -lglfw -lGL `pkg-config --cflags --libs freetype2`
-
 */
 
 /*
+============================================ REFERENCE ============================================
 
-REFERENCE:
-
-	#define TEXT_ENGINE_USE_MODERN_OPENGL //Use this before you include to use Modern OpenGL
+	#define TEXT_ENGINE_USE_MODERN_OPENGL //Use this before you include to use Modern OpenGL.
+	#define TEXT_ENGINE_NOT_STATIC //Do not use static functions (Library use static by default).
+	#define TEXT_ENGINE_STATIC_INLINE //Use static inline in functions.
 	
 	typedef struct Letter;
 	typedef struct Font;
@@ -100,13 +109,31 @@ REFERENCE:
 
 */
 	
-#ifndef TEXT_ENGINE
-#define TEXT_ENGINE
+#ifndef _TEXT_ENGINE
+#define _TEXT_ENGINE
+
+#include<math.h>
 
 #include<ft2build.h>
 #include FT_FREETYPE_H
 
-#include<math.h>
+#ifndef TEXT_ENGINE_NOT_STATIC
+
+	#ifdef TEXT_ENGINE_STATIC_INLINE
+
+		#define TEXTENGINEDEF static inline
+	
+	#else
+	
+		#define TEXTENGINEDEF static
+	
+	#endif
+
+#else
+
+	#define TEXTENGINEDEF extern
+
+#endif
 
 typedef struct{
 
@@ -137,7 +164,7 @@ typedef struct{
 
 //============================== Some math functions ==============================
 
-static void fontMultiplyMatrix4x4(float* m1, float* m2, float* dest){
+TEXTENGINEDEF void fontMultiplyMatrix4x4(float* m1, float* m2, float* dest){
 	
 	float a0 = m1[0], a1 = m1[1], a2 = m1[2], a3 = m1[3],
 	a4 = m1[4], a5 = m1[5], a6 = m1[6], a7 = m1[7],
@@ -171,14 +198,14 @@ static void fontMultiplyMatrix4x4(float* m1, float* m2, float* dest){
 		
 }
 
-static void fontIdentityMatrix4x4(float* m){
+TEXTENGINEDEF void fontIdentityMatrix4x4(float* m){
 	m[0] = 1.0, m[1] = 0.0, m[2] = 0.0, m[3] = 0.0,
 	m[4] = 0.0, m[5] = 1.0, m[6] = 0.0, m[7] = 0.0,
 	m[8] = 0.0, m[9] = 0.0, m[10] = 1.0, m[11] = 0.0,
 	m[12] = 0.0, m[13] = 0.0, m[14] = 0.0, m[15] = 1.0;
 }
 
-static void fontTranslateMatrix4x4(float* m, float* v){
+TEXTENGINEDEF void fontTranslateMatrix4x4(float* m, float* v){
 	
 	float r[] = {
 		1.0,0.0,0.0,0.0,
@@ -191,7 +218,7 @@ static void fontTranslateMatrix4x4(float* m, float* v){
 	
 }
 
-static void fontScaleMatrix4x4(float* m, float* v){
+TEXTENGINEDEF void fontScaleMatrix4x4(float* m, float* v){
 
 	float r[] = {
 		v[0],0.0,0.0,0.0,
@@ -204,7 +231,7 @@ static void fontScaleMatrix4x4(float* m, float* v){
 	
 }
 
-static void fontRotateMatrix4x4(float* m, float angle, float* v){
+TEXTENGINEDEF void fontRotateMatrix4x4(float* m, float angle, float* v){
 
 	float c = cosf(angle);
 	float s = sinf(angle);
@@ -237,7 +264,7 @@ static void fontRotateMatrix4x4(float* m, float angle, float* v){
 
 }
 
-static void fontCreateOrthographicMatrix(float left, float right, float bottom, float top, float near, float far, float* matrix){
+TEXTENGINEDEF void fontCreateOrthographicMatrix(float left, float right, float bottom, float top, float near, float far, float* matrix){
 
 	float dif_right_left = right - left;
 	float dif_top_bottom = top - bottom;
@@ -257,7 +284,7 @@ static void fontCreateOrthographicMatrix(float left, float right, float bottom, 
 
 #ifdef TEXT_ENGINE_USE_MODERN_OPENGL
 
-static Font* createFont(const char* font_name, int size){
+TEXTENGINEDEF Font* createFont(const char* font_name, int size){
 
 	Font* font = (Font*)malloc(sizeof(Font));
 	font->size = size;
@@ -420,7 +447,7 @@ static Font* createFont(const char* font_name, int size){
 	return font;
 }
 
-static void drawText(Font* font, const unsigned char* text, int x, int y){
+TEXTENGINEDEF void drawText(Font* font, const unsigned char* text, int x, int y){
 
 	glUseProgram(font->shader);
 	glBindVertexArray(font->vertex_array);
@@ -515,7 +542,7 @@ static void drawText(Font* font, const unsigned char* text, int x, int y){
 
 //============================== If Using OpenGL Compatibility Mode (Imediate Mode) ==============================
 
-static Font* createFont(const char* font_name, int size){
+TEXTENGINEDEF Font* createFont(const char* font_name, int size){
 
 	Font* font = (Font*)malloc(sizeof(Font));
 	font->size = size;
@@ -572,7 +599,7 @@ static Font* createFont(const char* font_name, int size){
 	return font;
 }
 
-static void drawText(Font* font, const unsigned char* text, int x, int y){
+TEXTENGINEDEF void drawText(Font* font, const unsigned char* text, int x, int y){
 
 	int matrix_mode;
 	glGetIntegerv(GL_MATRIX_MODE,&matrix_mode);
@@ -618,7 +645,7 @@ static void drawText(Font* font, const unsigned char* text, int x, int y){
 		glTranslatef(-x,-y,0);
 	}
 	
-	for(int i = 0; i < strlen(text); i++){
+	for(unsigned int i = 0; i < strlen((char*)text); i++){
 	
 		if(text[i] == '\n'){
 		
@@ -672,38 +699,38 @@ static void drawText(Font* font, const unsigned char* text, int x, int y){
 
 #endif
 
-static void setFontFreeTransform(Font* font, int free_transform){
+TEXTENGINEDEF void setFontFreeTransform(Font* font, int free_transform){
 	font->free_transform = free_transform;
 }
 
-static void setFontColor(Font* font, float r, float g, float b, float a){
+TEXTENGINEDEF void setFontColor(Font* font, float r, float g, float b, float a){
 	font->color_r = r;
 	font->color_g = g;
 	font->color_b = b;
 	font->color_a = a;
 }
 
-static void setFontCanvasSize(Font* font, int width, int height){
+TEXTENGINEDEF void setFontCanvasSize(Font* font, int width, int height){
 	font->canvas_width = width;
 	font->canvas_height = height;
 	fontCreateOrthographicMatrix(0,font->canvas_width,font->canvas_height,0,-1.0,1.0,font->projection_matrix);
 }
 
-static void setTabSize(Font* font, const int tab_size){
+TEXTENGINEDEF void setTabSize(Font* font, const int tab_size){
 	font->tab_size = tab_size;
 }
 
-static void setFontScale(Font* font, float scale){
+TEXTENGINEDEF void setFontScale(Font* font, float scale){
 	font->scale_x = scale;
 	font->scale_y = scale;
 }
 
-static void setFontScaleInPixels(Font* font, float scale_in_pixels){
+TEXTENGINEDEF void setFontScaleInPixels(Font* font, float scale_in_pixels){
 	font->scale_x = scale_in_pixels / (float)font->size;
 	font->scale_y = scale_in_pixels / (float)font->size;
 }
 
-static int getSizeText(Font* font,const unsigned char* text){
+TEXTENGINEDEF int getSizeText(Font* font,const unsigned char* text){
 
 	int max_width = 0;
 	int x = 0;
@@ -722,19 +749,19 @@ static int getSizeText(Font* font,const unsigned char* text){
 	return max_width * font->scale_x;
 }
 
-static int getFontHeight(Font* font){
+TEXTENGINEDEF int getFontHeight(Font* font){
 	
 	return font->size * font->scale_y;	
 	
 }
 
-static int getTextAlignRight(Font* font, const unsigned char* text, int position_x){
+TEXTENGINEDEF int getTextAlignRight(Font* font, const unsigned char* text, int position_x){
 	
 	return position_x - getSizeText(font,text);
 	
 }
 
-static int getTextAlignCenter(Font* font, const unsigned char* text, int position_x){
+TEXTENGINEDEF int getTextAlignCenter(Font* font, const unsigned char* text, int position_x){
 	
 	return position_x - (getSizeText(font,text) / 2);
 	
