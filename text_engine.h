@@ -28,7 +28,7 @@
 
 /*
 
-Text Engine 1.2.21
+Text Engine 1.2.22
 
 This is a unique header library, that serves that a fast way to draw text using OpenGL and FreeType2, and serves also as example of freetype2 library.
 
@@ -37,14 +37,16 @@ Dependences: OpenGL 1.1+ and freetype2
 You need load OpenGL functions before include this library, as the exemple bellow.
 In the exemple OpenGL was loaded with glfw3 library (Of course, glfw3 is opitional for this library):
 
-//Exemple was compiled on linux with: -lglfw -lGL `pkg-config --cflags --libs freetype2`
-
 */
 
 /*
 
+//Exemple compiled on linux with: 
+//		-lglfw -lGL `pkg-config --cflags --libs freetype2`
+
 #include<GLFW/glfw3.h>
 
+#define TEXT_ENGINE_IMPLEMENTATION
 #include"text_engine.h"
 
 int main(){
@@ -78,12 +80,37 @@ int main(){
 /*
 ============================================ REFERENCE ============================================
 
+	#defien TEXT_ENGINE_IMPLEMENTATION //Define it before last include call of this library.
 	#define TEXT_ENGINE_USE_MODERN_OPENGL //Use this before you include to use Modern OpenGL.
-	#define TEXT_ENGINE_NOT_STATIC //Do not use static functions (Library use static by default).
+	#define TEXT_ENGINE_STATIC //Use static functions.
 	#define TEXT_ENGINE_STATIC_INLINE //Use static inline in functions.
 	
-	typedef struct Letter;
-	typedef struct Font;
+	typedef struct{
+
+		unsigned int texture;
+		int left, top;
+		unsigned int width, rows;
+		long int advance;
+
+	}Letter;
+	
+	typedef struct{
+
+		int size, tab_size;
+		float scale_x, scale_y;
+		Letter letters[255];
+		
+		float color_r, color_g, color_b, color_a;
+		
+		float transform_matrix[16];
+		float projection_matrix[16];
+		int canvas_width, canvas_height;
+		
+		unsigned int shader, vertex_array;
+		
+		int free_transform;
+
+	}Font;
 
 	Font* createFont(const char* font_name, int size);
 	void drawText(Font* font, const unsigned char* text, int x, int y);
@@ -94,12 +121,12 @@ int main(){
 	void setTabSize(Font* font, const int tab_size);
 	void setFontScale(Font* font, float scale); //Scale is not equal as font pixels size
 	void setFontScaleInPixels(Font* font, float scale_in_pixels); //Simulate pixels size on scale
-	int getSizeText(Font* font,const char* text);
+	int getSizeText(Font* font,const const unsigned char* text);
 	int getFontHeight(Font* font); //Return font->size * font->scale_y;
 	int getTextAlignRight(Font* font, const unsigned char* text, int position_x);
 	int getTextAlignCenter(Font* font, const unsigned char* text, int position_x);
 
-	//Internal use, but you also can use:
+	//Internal Math FUnctions
 	void fontMultiplyMatrix4x4(float* m1, float* m2, float* dest);
 	void fontIdentityMatrix4x4(float* m);
 	void fontTranslateMatrix4x4(float* m, float* v);
@@ -117,22 +144,34 @@ int main(){
 #include<ft2build.h>
 #include FT_FREETYPE_H
 
-#ifndef TEXT_ENGINE_NOT_STATIC
+#ifndef TEXTENGINEDEF
 
-	#ifdef TEXT_ENGINE_STATIC_INLINE
+	#ifndef TEXT_ENGINE_STATIC
 
-		#define TEXTENGINEDEF static inline
-	
+		#ifdef TEXT_ENGINE_STATIC_INLINE
+
+			#define TEXTENGINEDEF static inline
+		
+		#else
+		
+			#define TEXTENGINEDEF extern
+		
+		#endif
+
 	#else
-	
-		#define TEXTENGINEDEF static
-	
+
+		#ifdef TEXT_ENGINE_STATIC_INLINE
+
+			#define TEXTENGINEDEF static inline
+		
+		#else
+		
+			#define TEXTENGINEDEF static
+		
+		#endif
+
 	#endif
-
-#else
-
-	#define TEXTENGINEDEF extern
-
+	
 #endif
 
 typedef struct{
@@ -162,123 +201,33 @@ typedef struct{
 
 }Font;
 
-//============================== Some math functions ==============================
+TEXTENGINEDEF Font* createFont(const char* font_name, int size);
+TEXTENGINEDEF void drawText(Font* font, const unsigned char* text, int x, int y);
 
-TEXTENGINEDEF void fontMultiplyMatrix4x4(float* m1, float* m2, float* dest){
-	
-	float a0 = m1[0], a1 = m1[1], a2 = m1[2], a3 = m1[3],
-	a4 = m1[4], a5 = m1[5], a6 = m1[6], a7 = m1[7],
-	a8 = m1[8], a9 = m1[9], a10 = m1[10], a11 = m1[11],
-	a12 = m1[12], a13 = m1[13], a14 = m1[14], a15 = m1[15],
+TEXTENGINEDEF void setFontFreeTransform(Font* font, int free_transform); //Able you to change font->matrix_transform variable by yourself.
+TEXTENGINEDEF void setFontColor(Font* font, float r, float g, float b, float a);
+TEXTENGINEDEF void setFontCanvasSize(Font* font, int width, int height); //Set size of values that will be share with orthographic matrix.
+TEXTENGINEDEF void setTabSize(Font* font, const int tab_size);
+TEXTENGINEDEF void setFontScale(Font* font, float scale); //Scale is not equal as font pixels size
+TEXTENGINEDEF void setFontScaleInPixels(Font* font, float scale_in_pixels); //Simulate pixels size on scale
+TEXTENGINEDEF int getSizeText(Font* font, const unsigned char* text);
+TEXTENGINEDEF int getFontHeight(Font* font); //Return font->size * font->scale_y;
+TEXTENGINEDEF int getTextAlignRight(Font* font, const unsigned char* text, int position_x);
+TEXTENGINEDEF int getTextAlignCenter(Font* font, const unsigned char* text, int position_x);
 
-	b0 = m2[0], b1 = m2[1], b2 = m2[2], b3 = m2[3],
-	b4 = m2[4], b5 = m2[5], b6 = m2[6], b7 = m2[7],
-	b8 = m2[8], b9 = m2[9], b10 = m2[10], b11 = m2[11],
-	b12 = m2[12], b13 = m2[13], b14 = m2[14], b15 = m2[15];
+//Internal Math FUnctions
+TEXTENGINEDEF void fontMultiplyMatrix4x4(float* m1, float* m2, float* dest);
+TEXTENGINEDEF void fontIdentityMatrix4x4(float* m);
+TEXTENGINEDEF void fontTranslateMatrix4x4(float* m, float* v);
+TEXTENGINEDEF void fontScaleMatrix4x4(float* m, float* v);
+TEXTENGINEDEF void fontRotateMatrix4x4(float* m, float angle, float* v);
+TEXTENGINEDEF void fontCreateOrthographicMatrix(float left, float right, float bottom, float top, float near, float far, float* matrix);
 
-	dest[0] = a0 * b0 + a4 * b1 + a8 * b2 + a12 * b3;
-	dest[1] = a1 * b0 + a5 * b1 + a9 * b2 + a13 * b3;
-	dest[2] = a2 * b0 + a6 * b1 + a10 * b2 + a14 * b3;
-	dest[3] = a3 * b0 + a7 * b1 + a11 * b2 + a15 * b3;
+#endif //_TEXT_ENGINE
 
-	dest[4] = a0 * b4 + a4 * b5 + a8 * b6 + a12 * b7;
-	dest[5] = a1 * b4 + a5 * b5 + a9 * b6 + a13 * b7;
-	dest[6] = a2 * b4 + a6 * b5 + a10 * b6 + a14 * b7;
-	dest[7] = a3 * b4 + a7 * b5 + a11 * b6 + a15 * b7;
+//============================================= End of header and begin of Implementation =============================================
 
-	dest[8] = a0 * b8 + a4 * b9 + a8 * b10 + a12 * b11;
-	dest[9] = a1 * b8 + a5 * b9 + a9 * b10 + a13 * b11;
-	dest[10] = a2 * b8 + a6 * b9 + a10 * b10 + a14 * b11;
-	dest[11] = a3 * b8 + a7 * b9 + a11 * b10 + a15 * b11;
-
-	dest[12] = a0 * b12 + a4 * b13 + a8 * b14 + a12 * b15;
-	dest[13] = a1 * b12 + a5 * b13 + a9 * b14 + a13 * b15;
-	dest[14] = a2 * b12 + a6 * b13 + a10 * b14 + a14 * b15;
-	dest[15] = a3 * b12 + a7 * b13 + a11 * b14 + a15 * b15;
-		
-}
-
-TEXTENGINEDEF void fontIdentityMatrix4x4(float* m){
-	m[0] = 1.0, m[1] = 0.0, m[2] = 0.0, m[3] = 0.0,
-	m[4] = 0.0, m[5] = 1.0, m[6] = 0.0, m[7] = 0.0,
-	m[8] = 0.0, m[9] = 0.0, m[10] = 1.0, m[11] = 0.0,
-	m[12] = 0.0, m[13] = 0.0, m[14] = 0.0, m[15] = 1.0;
-}
-
-TEXTENGINEDEF void fontTranslateMatrix4x4(float* m, float* v){
-	
-	float r[] = {
-		1.0,0.0,0.0,0.0,
-		0.0,1.0,0.0,0.0,
-		0.0,0.0,1.0,0.0,
-		v[0],v[1],v[2],1.0
-	};
-	
-	fontMultiplyMatrix4x4(m,r,m);
-	
-}
-
-TEXTENGINEDEF void fontScaleMatrix4x4(float* m, float* v){
-
-	float r[] = {
-		v[0],0.0,0.0,0.0,
-		0.0,v[1],0.0,0.0,
-		0.0,0.0,v[2],0.0,
-		0.0,0.0,0.0,1.0
-	};
-	
-	fontMultiplyMatrix4x4(m,r,m);
-	
-}
-
-TEXTENGINEDEF void fontRotateMatrix4x4(float* m, float angle, float* v){
-
-	float c = cosf(angle);
-	float s = sinf(angle);
-	float t = (1.0f - c);
-	
-	float r[] = {
-		1.0,0.0,0.0,0.0,
-		0.0,1.0,0.0,0.0,
-		0.0,0.0,1.0,0.0,
-		0.0,0.0,0.0,1.0
-	};
-
-	float lenght = sqrtf( (v[0]*v[0]) + (v[1]*v[1]) + (v[2]*v[2]) );
-	
-	v[0] = v[0] / lenght;
-	
-	r[0] = c + (v[0]*v[0]) * t;
-	r[1] = t * v[0] * v[1] + s * v[2];
-	r[2] = t * v[0] * v[2] - s * v[1];
-	
-	r[4] = t * v[0] * v[1] - s * v[2];
-	r[5] = t * (v[1]*v[1]) + c;
-	r[6] = t * v[1] * v[2] + s * v[0];
-	
-	r[8] = t * v[0] * v[2] + s * v[1];
-	r[9] = t * v[1] * v[2] - s * v[0];
-	r[10] = t * (v[2]*v[2]) + c;
-	
-	fontMultiplyMatrix4x4(m,r,m);
-
-}
-
-TEXTENGINEDEF void fontCreateOrthographicMatrix(float left, float right, float bottom, float top, float near, float far, float* matrix){
-
-	float dif_right_left = right - left;
-	float dif_top_bottom = top - bottom;
-	float dif_far_near = far - near;
-
-	matrix[0] = 2.0f / (dif_right_left);
-	matrix[5] = 2.0f / (dif_top_bottom);
-	matrix[10] = -2.0f / (dif_far_near);
-	matrix[12] = -( (right+left)/(dif_right_left) );
-	matrix[13] = -( (top+bottom)/(dif_top_bottom) );
-	matrix[14] = -( (far+near)/(dif_far_near) );
-	matrix[15] = 1.0f;
-
-}
+#ifdef TEXT_ENGINE_IMPLEMENTATION
 
 //============================== If Using Modern OpenGL ==============================
 
@@ -538,7 +487,7 @@ TEXTENGINEDEF void drawText(Font* font, const unsigned char* text, int x, int y)
 
 }
 
-#else
+#else //TEXT_ENGINE_USE_MODERN_OPENGL
 
 //============================== If Using OpenGL Compatibility Mode (Imediate Mode) ==============================
 
@@ -767,4 +716,124 @@ TEXTENGINEDEF int getTextAlignCenter(Font* font, const unsigned char* text, int 
 	
 }
 
-#endif
+
+//============================== Internal Math Functions ==============================
+
+TEXTENGINEDEF void fontMultiplyMatrix4x4(float* m1, float* m2, float* dest){
+	
+	float a0 = m1[0], a1 = m1[1], a2 = m1[2], a3 = m1[3],
+	a4 = m1[4], a5 = m1[5], a6 = m1[6], a7 = m1[7],
+	a8 = m1[8], a9 = m1[9], a10 = m1[10], a11 = m1[11],
+	a12 = m1[12], a13 = m1[13], a14 = m1[14], a15 = m1[15],
+
+	b0 = m2[0], b1 = m2[1], b2 = m2[2], b3 = m2[3],
+	b4 = m2[4], b5 = m2[5], b6 = m2[6], b7 = m2[7],
+	b8 = m2[8], b9 = m2[9], b10 = m2[10], b11 = m2[11],
+	b12 = m2[12], b13 = m2[13], b14 = m2[14], b15 = m2[15];
+
+	dest[0] = a0 * b0 + a4 * b1 + a8 * b2 + a12 * b3;
+	dest[1] = a1 * b0 + a5 * b1 + a9 * b2 + a13 * b3;
+	dest[2] = a2 * b0 + a6 * b1 + a10 * b2 + a14 * b3;
+	dest[3] = a3 * b0 + a7 * b1 + a11 * b2 + a15 * b3;
+
+	dest[4] = a0 * b4 + a4 * b5 + a8 * b6 + a12 * b7;
+	dest[5] = a1 * b4 + a5 * b5 + a9 * b6 + a13 * b7;
+	dest[6] = a2 * b4 + a6 * b5 + a10 * b6 + a14 * b7;
+	dest[7] = a3 * b4 + a7 * b5 + a11 * b6 + a15 * b7;
+
+	dest[8] = a0 * b8 + a4 * b9 + a8 * b10 + a12 * b11;
+	dest[9] = a1 * b8 + a5 * b9 + a9 * b10 + a13 * b11;
+	dest[10] = a2 * b8 + a6 * b9 + a10 * b10 + a14 * b11;
+	dest[11] = a3 * b8 + a7 * b9 + a11 * b10 + a15 * b11;
+
+	dest[12] = a0 * b12 + a4 * b13 + a8 * b14 + a12 * b15;
+	dest[13] = a1 * b12 + a5 * b13 + a9 * b14 + a13 * b15;
+	dest[14] = a2 * b12 + a6 * b13 + a10 * b14 + a14 * b15;
+	dest[15] = a3 * b12 + a7 * b13 + a11 * b14 + a15 * b15;
+		
+}
+
+TEXTENGINEDEF void fontIdentityMatrix4x4(float* m){
+	m[0] = 1.0, m[1] = 0.0, m[2] = 0.0, m[3] = 0.0,
+	m[4] = 0.0, m[5] = 1.0, m[6] = 0.0, m[7] = 0.0,
+	m[8] = 0.0, m[9] = 0.0, m[10] = 1.0, m[11] = 0.0,
+	m[12] = 0.0, m[13] = 0.0, m[14] = 0.0, m[15] = 1.0;
+}
+
+TEXTENGINEDEF void fontTranslateMatrix4x4(float* m, float* v){
+	
+	float r[] = {
+		1.0,0.0,0.0,0.0,
+		0.0,1.0,0.0,0.0,
+		0.0,0.0,1.0,0.0,
+		v[0],v[1],v[2],1.0
+	};
+	
+	fontMultiplyMatrix4x4(m,r,m);
+	
+}
+
+TEXTENGINEDEF void fontScaleMatrix4x4(float* m, float* v){
+
+	float r[] = {
+		v[0],0.0,0.0,0.0,
+		0.0,v[1],0.0,0.0,
+		0.0,0.0,v[2],0.0,
+		0.0,0.0,0.0,1.0
+	};
+	
+	fontMultiplyMatrix4x4(m,r,m);
+	
+}
+
+TEXTENGINEDEF void fontRotateMatrix4x4(float* m, float angle, float* v){
+
+	float c = cosf(angle);
+	float s = sinf(angle);
+	float t = (1.0f - c);
+	
+	float r[] = {
+		1.0,0.0,0.0,0.0,
+		0.0,1.0,0.0,0.0,
+		0.0,0.0,1.0,0.0,
+		0.0,0.0,0.0,1.0
+	};
+
+	float lenght = sqrtf( (v[0]*v[0]) + (v[1]*v[1]) + (v[2]*v[2]) );
+	
+	v[0] = v[0] / lenght;
+	
+	r[0] = c + (v[0]*v[0]) * t;
+	r[1] = t * v[0] * v[1] + s * v[2];
+	r[2] = t * v[0] * v[2] - s * v[1];
+	
+	r[4] = t * v[0] * v[1] - s * v[2];
+	r[5] = t * (v[1]*v[1]) + c;
+	r[6] = t * v[1] * v[2] + s * v[0];
+	
+	r[8] = t * v[0] * v[2] + s * v[1];
+	r[9] = t * v[1] * v[2] - s * v[0];
+	r[10] = t * (v[2]*v[2]) + c;
+	
+	fontMultiplyMatrix4x4(m,r,m);
+
+}
+
+TEXTENGINEDEF void fontCreateOrthographicMatrix(float left, float right, float bottom, float top, float near, float far, float* matrix){
+
+	float dif_right_left = right - left;
+	float dif_top_bottom = top - bottom;
+	float dif_far_near = far - near;
+
+	matrix[0] = 2.0f / (dif_right_left);
+	matrix[5] = 2.0f / (dif_top_bottom);
+	matrix[10] = -2.0f / (dif_far_near);
+	matrix[12] = -( (right+left)/(dif_right_left) );
+	matrix[13] = -( (top+bottom)/(dif_top_bottom) );
+	matrix[14] = -( (far+near)/(dif_far_near) );
+	matrix[15] = 1.0f;
+
+}
+
+#endif //TEXT_ENGINE_IMPLEMENTATION
+
