@@ -12,6 +12,8 @@ Example with glfw3:
 ```C
 
 #include<GLFW/glfw3.h>
+
+#define TEXT_ENGINE_IMPLEMENTATION
 #include"text_engine.h"
 
 int main(){
