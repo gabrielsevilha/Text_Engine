@@ -4,7 +4,8 @@ This is a unique header library, that serves as a fast way to draw text using Op
 
 Dependences: OpenGL 1.1+ and FreeType2
   
-  - You need load OpenGL functions before include this library, as the example bellow. </br>
+  - You must load OpenGL functions before include this library, as the example bellow. </br>
+  - You must define "TEXT_ENGINE_IMPLEMENTATION" before the LAST include call of this library. </br>
   - In the example OpenGL was loaded with Glfw3 library. </br>
 
 
