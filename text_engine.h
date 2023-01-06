@@ -28,111 +28,48 @@
 
 /*
 
-Text Engine 1.2.22
+Text Engine 1.2.23 Copyright (C) Gabriel Sevilha.
 
-This is a unique header library, that serves that a fast way to draw text using OpenGL and FreeType2, and serves also as example of freetype2 library.
+This is a unique header library, that serves as a fast way to draw text using OpenGL and FreeType2, and serves also as example of freetype2 library.
 
 Dependences: OpenGL 1.1+ and freetype2
 
 You need load OpenGL functions before include this library, as the exemple bellow.
-In the exemple OpenGL was loaded with glfw3 library (Of course, glfw3 is opitional for this library):
+In the exemple OpenGL was loaded with glfw3 library (Of course, glfw3 is opitional for this library).
+You must define "TEXT_ENGINE_IMPLEMENTATION" before the LAST include call of this library.
 
-*/
+Exemple compiled on linux with: -lglfw -lGL `pkg-config --cflags --libs freetype2`
 
-/*
+	#include<GLFW/glfw3.h>
 
-//Exemple compiled on linux with: 
-//		-lglfw -lGL `pkg-config --cflags --libs freetype2`
+	#define TEXT_ENGINE_IMPLEMENTATION
+	#include"text_engine.h"
 
-#include<GLFW/glfw3.h>
+	int main(){
 
-#define TEXT_ENGINE_IMPLEMENTATION
-#include"text_engine.h"
-
-int main(){
-
-	glfwInit();
-	GLFWwindow* window = glfwCreateWindow(800,600,"text_engine",0,0);
-	glfwMakeContextCurrent(window);
-	
-	Font* font = createFont("font.ttf",48);
-	
-	while(!glfwWindowShouldClose(window)){
-	
-		glfwWaitEvents();
+		glfwInit();
+		GLFWwindow* window = glfwCreateWindow(800,600,"text_engine",0,0);
+		glfwMakeContextCurrent(window);
 		
-		glClear(GL_COLOR_BUFFER_BIT);
+		Font* font = createFont("font.ttf",48);
 		
-		drawText(font, "Hello, World!", getTextAlignCenter(font,"Hello, World!",400), 600/2-getFontHeight(font));
-    
-		glfwSwapBuffers(window);
+		while(!glfwWindowShouldClose(window)){
+		
+			glfwWaitEvents();
+			
+			glClear(GL_COLOR_BUFFER_BIT);
+			
+			drawText(font, "Hello, World!", getTextAlignCenter(font,"Hello, World!",400), 600/2-getFontHeight(font));
+		
+			glfwSwapBuffers(window);
+			
+		}
+		
+		free(font);
+		
+		return 0;
 		
 	}
-	
-	free(font);
-	
-	return 0;
-	
-}
-
-*/
-
-/*
-============================================ REFERENCE ============================================
-
-	#defien TEXT_ENGINE_IMPLEMENTATION //Define it before last include call of this library.
-	#define TEXT_ENGINE_USE_MODERN_OPENGL //Use this before you include to use Modern OpenGL.
-	#define TEXT_ENGINE_STATIC //Use static functions.
-	#define TEXT_ENGINE_STATIC_INLINE //Use static inline in functions.
-	
-	typedef struct{
-
-		unsigned int texture;
-		int left, top;
-		unsigned int width, rows;
-		long int advance;
-
-	}Letter;
-	
-	typedef struct{
-
-		int size, tab_size;
-		float scale_x, scale_y;
-		Letter letters[255];
-		
-		float color_r, color_g, color_b, color_a;
-		
-		float transform_matrix[16];
-		float projection_matrix[16];
-		int canvas_width, canvas_height;
-		
-		unsigned int shader, vertex_array;
-		
-		int free_transform;
-
-	}Font;
-
-	Font* createFont(const char* font_name, int size);
-	void drawText(Font* font, const unsigned char* text, int x, int y);
-
-	void setFontFreeTransform(Font* font, int free_transform); //Able you to change font->matrix_transform variable by yourself.
-	void setFontColor(Font* font, float r, float g, float b, float a);
-	void setFontCanvasSize(Font* font, int width, int height); //Set size of values that will be share with orthographic matrix.
-	void setTabSize(Font* font, const int tab_size);
-	void setFontScale(Font* font, float scale); //Scale is not equal as font pixels size
-	void setFontScaleInPixels(Font* font, float scale_in_pixels); //Simulate pixels size on scale
-	int getSizeText(Font* font,const const unsigned char* text);
-	int getFontHeight(Font* font); //Return font->size * font->scale_y;
-	int getTextAlignRight(Font* font, const unsigned char* text, int position_x);
-	int getTextAlignCenter(Font* font, const unsigned char* text, int position_x);
-
-	//Internal Math FUnctions
-	void fontMultiplyMatrix4x4(float* m1, float* m2, float* dest);
-	void fontIdentityMatrix4x4(float* m);
-	void fontTranslateMatrix4x4(float* m, float* v);
-	void fontScaleMatrix4x4(float* m, float* v);
-	void fontRotateMatrix4x4(float* m, float angle, float* v);
-	void fontCreateOrthographicMatrix(float left, float right, float bottom, float top, float near, float far, float* matrix);
 
 */
 	
@@ -145,33 +82,19 @@ int main(){
 #include FT_FREETYPE_H
 
 #ifndef TEXTENGINEDEF
-
 	#ifndef TEXT_ENGINE_STATIC
-
 		#ifdef TEXT_ENGINE_STATIC_INLINE
-
 			#define TEXTENGINEDEF static inline
-		
 		#else
-		
 			#define TEXTENGINEDEF extern
-		
 		#endif
-
 	#else
-
 		#ifdef TEXT_ENGINE_STATIC_INLINE
-
 			#define TEXTENGINEDEF static inline
-		
 		#else
-		
 			#define TEXTENGINEDEF static
-		
 		#endif
-
 	#endif
-	
 #endif
 
 typedef struct{
@@ -202,30 +125,45 @@ typedef struct{
 }Font;
 
 TEXTENGINEDEF Font* createFont(const char* font_name, int size);
+
 TEXTENGINEDEF void drawText(Font* font, const unsigned char* text, int x, int y);
 
 TEXTENGINEDEF void setFontFreeTransform(Font* font, int free_transform); //Able you to change font->matrix_transform variable by yourself.
+
 TEXTENGINEDEF void setFontColor(Font* font, float r, float g, float b, float a);
+
 TEXTENGINEDEF void setFontCanvasSize(Font* font, int width, int height); //Set size of values that will be share with orthographic matrix.
+
 TEXTENGINEDEF void setTabSize(Font* font, const int tab_size);
+
 TEXTENGINEDEF void setFontScale(Font* font, float scale); //Scale is not equal as font pixels size
+
 TEXTENGINEDEF void setFontScaleInPixels(Font* font, float scale_in_pixels); //Simulate pixels size on scale
+
 TEXTENGINEDEF int getSizeText(Font* font, const unsigned char* text);
+
 TEXTENGINEDEF int getFontHeight(Font* font); //Return font->size * font->scale_y;
+
 TEXTENGINEDEF int getTextAlignRight(Font* font, const unsigned char* text, int position_x);
+
 TEXTENGINEDEF int getTextAlignCenter(Font* font, const unsigned char* text, int position_x);
 
-//Internal Math FUnctions
+//Internal Math Functions
 TEXTENGINEDEF void fontMultiplyMatrix4x4(float* m1, float* m2, float* dest);
+
 TEXTENGINEDEF void fontIdentityMatrix4x4(float* m);
+
 TEXTENGINEDEF void fontTranslateMatrix4x4(float* m, float* v);
+
 TEXTENGINEDEF void fontScaleMatrix4x4(float* m, float* v);
+
 TEXTENGINEDEF void fontRotateMatrix4x4(float* m, float angle, float* v);
+
 TEXTENGINEDEF void fontCreateOrthographicMatrix(float left, float right, float bottom, float top, float near, float far, float* matrix);
 
 #endif //_TEXT_ENGINE
 
-//============================================= End of header and begin of Implementation =============================================
+//============================================= End of Header File =============================================
 
 #ifdef TEXT_ENGINE_IMPLEMENTATION
 
@@ -646,7 +584,7 @@ TEXTENGINEDEF void drawText(Font* font, const unsigned char* text, int x, int y)
 
 }
 
-#endif
+#endif //#else TEXT_ENGINE_USE_MODERN_OPENGL
 
 TEXTENGINEDEF void setFontFreeTransform(Font* font, int free_transform){
 	font->free_transform = free_transform;
