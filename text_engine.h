@@ -28,7 +28,7 @@
 
 /*
 
-Text Engine 1.2.23 Copyright (C) Gabriel Sevilha.
+Text Engine 1.2.24 Copyright (C) Gabriel Sevilha.
 
 This is a unique header library, that serves as a fast way to draw text using OpenGL and FreeType2, and serves also as example of freetype2 library.
 
@@ -491,9 +491,11 @@ TEXTENGINEDEF void drawText(Font* font, const unsigned char* text, int x, int y)
 	int matrix_mode;
 	glGetIntegerv(GL_MATRIX_MODE,&matrix_mode);
 	glMatrixMode(GL_PROJECTION);
+	float gl_current_ortho[16];
+	glGetFloatv(GL_PROJECTION_MATRIX,gl_current_ortho);
 	glLoadIdentity();
 	glOrtho(0,font->canvas_width,font->canvas_height,0,-1.0,1.0);
-	glMatrixMode(matrix_mode);
+	glMatrixMode(GL_MODELVIEW);
 
 	int is_gltexture2d_active;
 	glGetIntegerv(GL_TEXTURE_2D,&is_gltexture2d_active);
@@ -569,6 +571,10 @@ TEXTENGINEDEF void drawText(Font* font, const unsigned char* text, int x, int y)
 	glPopMatrix();
 	
 	glColor4f(old_color[0], old_color[1], old_color[2], old_color[3]);
+	
+	glMatrixMode(GL_PROJECTION);
+	glLoadMatrixf(gl_current_ortho);
+	glMatrixMode(matrix_mode);
 	
 	if(is_gldepthtest_active)
 		glEnable(GL_DEPTH_TEST);
