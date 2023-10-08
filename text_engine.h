@@ -278,7 +278,7 @@ TEXTENGINEDEF Font* createFont(const char* font_name, int size){
 		void main(){
 			float a = texture2D(texture,out_uv).a;
 			if(a <= 0.0) discard;
-			gl_FragColor = color * texture2D(texture,out_uv).a;
+			gl_FragColor = color * a;
 		}
 		
 	)";
