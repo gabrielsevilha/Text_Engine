@@ -28,7 +28,7 @@
 
 /*
 
-Text Engine 1.2.24 Copyright (C) Gabriel Sevilha.
+Text Engine 1.2.25 Copyright (C) Gabriel Sevilha.
 
 This is a unique header library, that serves as a fast way to draw text using OpenGL and FreeType2, and serves also as example of freetype2 library.
 
@@ -41,6 +41,10 @@ You must define "TEXT_ENGINE_IMPLEMENTATION" before the LAST include call of thi
 Exemple compiled on linux with: -lglfw -lGL `pkg-config --cflags --libs freetype2`
 
 	#include<GLFW/glfw3.h>
+
+	#define TEXT_ENGINE_MAX_GLYPHS_COUNT 1024 //If you do not define it, the default is 512
+	
+	#define TEXT_ENGINE_USE_MODERN_OPENGL //If you do not define it, text engine will use the 1.1 immediate opengl mode
 
 	#define TEXT_ENGINE_IMPLEMENTATION
 	#include"text_engine.h"
@@ -97,6 +101,10 @@ Exemple compiled on linux with: -lglfw -lGL `pkg-config --cflags --libs freetype
 	#endif
 #endif
 
+#ifndef TEXT_ENGINE_MAX_GLYPHS_COUNT 
+#define TEXT_ENGINE_MAX_GLYPHS_COUNT 512
+#endif
+
 typedef struct{
 
 	unsigned int texture;
@@ -110,13 +118,15 @@ typedef struct{
 
 	int size, tab_size;
 	float scale_x, scale_y;
-	Letter letters[255];
+	Letter letters[TEXT_ENGINE_MAX_GLYPHS_COUNT];
+	
+	float depth;
 	
 	float color_r, color_g, color_b, color_a;
 	
 	float transform_matrix[16];
 	float projection_matrix[16];
-	int canvas_width, canvas_height;
+	int canvas_width, canvas_height, canvas_depth;
 	
 	unsigned int shader, vertex_array;
 	
@@ -130,9 +140,11 @@ TEXTENGINEDEF void drawText(Font* font, const unsigned char* text, int x, int y)
 
 TEXTENGINEDEF void setFontFreeTransform(Font* font, int free_transform); //Able you to change font->matrix_transform variable by yourself.
 
+TEXTENGINEDEF void setFontDepth(Font* font, float depth);
+
 TEXTENGINEDEF void setFontColor(Font* font, float r, float g, float b, float a);
 
-TEXTENGINEDEF void setFontCanvasSize(Font* font, int width, int height); //Set size of values that will be share with orthographic matrix.
+TEXTENGINEDEF void setFontCanvasSize(Font* font, int width, int height, int depth); //Set size of values that will be share with orthographic matrix.
 
 TEXTENGINEDEF void setTabSize(Font* font, const int tab_size);
 
@@ -181,6 +193,8 @@ TEXTENGINEDEF Font* createFont(const char* font_name, int size){
 	glGetFloatv(GL_VIEWPORT,gl_current_view_port);
 	font->canvas_width = gl_current_view_port[2];
 	font->canvas_height = gl_current_view_port[3];
+	font->canvas_depth = 1000000;
+	font->depth = 0.0;
 	font->color_r = 1.0f;
 	font->color_g = 1.0f;
 	font->color_b = 1.0f;
@@ -189,11 +203,11 @@ TEXTENGINEDEF Font* createFont(const char* font_name, int size){
 	
 	for(int i = 0; i < 16; i++) font->projection_matrix[i] = 0.0f;
 	font->projection_matrix[0] = font->projection_matrix[5] = font->projection_matrix[10] = font->projection_matrix[15] = 1.0f;
-	fontCreateOrthographicMatrix(0,font->canvas_width,font->canvas_height,0,-1.0,1.0,font->projection_matrix);
+	fontCreateOrthographicMatrix(0,font->canvas_width,font->canvas_height,0,-font->canvas_depth,font->canvas_depth,font->projection_matrix);
 	
 	for(int i = 0; i < 16; i++) font->transform_matrix[i] = 0.0f;
 	font->transform_matrix[0] = font->transform_matrix[5] = font->transform_matrix[10] = font->transform_matrix[15] = 1.0f;
-	fontCreateOrthographicMatrix(0,font->canvas_width,font->canvas_height,0,-1.0,1.0,font->transform_matrix);
+	fontCreateOrthographicMatrix(0,font->canvas_width,font->canvas_height,0,-font->canvas_depth,font->canvas_depth,font->transform_matrix);
 	
 	FT_Library ft;
 	if( FT_Init_FreeType(&ft) ){
@@ -206,7 +220,7 @@ TEXTENGINEDEF Font* createFont(const char* font_name, int size){
 	FT_Set_Pixel_Sizes(face,0,size);
 	glPixelStorei(GL_UNPACK_ALIGNMENT,1);
 
-	for(int i = 0; i < 255; i++){
+	for(int i = 0; i < TEXT_ENGINE_MAX_GLYPHS_COUNT; i++){
 	
 		FT_Load_Char(face,i,FT_LOAD_RENDER);
 		
@@ -240,14 +254,14 @@ TEXTENGINEDEF Font* createFont(const char* font_name, int size){
 		uniform mat4 model;
 		uniform mat4 projection;
 		
-		uniform vec2 position;
+		uniform vec3 position;
 		uniform vec2 size;
 		
 		varying vec2 out_uv;
 		
 		void main(){
 			out_uv = in_uv;
-			gl_Position = projection * model * vec4( position + (in_vertex * size) , 0.0, 1.0);
+			gl_Position = projection * model * vec4( position.xy + (in_vertex * size) , position.z, 1.0);
 		}
 		
 	)";
@@ -262,6 +276,8 @@ TEXTENGINEDEF Font* createFont(const char* font_name, int size){
 		uniform vec4 color;
 		
 		void main(){
+			float a = texture2D(texture,out_uv).a;
+			if(a <= 0.0) discard;
 			gl_FragColor = color * texture2D(texture,out_uv).a;
 		}
 		
@@ -363,8 +379,12 @@ TEXTENGINEDEF void drawText(Font* font, const unsigned char* text, int x, int y)
 		
 	int is_gldepthtest_active;
 	glGetIntegerv(GL_DEPTH_TEST,&is_gldepthtest_active);
-	if(is_gldepthtest_active)
-		glDisable(GL_DEPTH_TEST);
+	if(!is_gldepthtest_active)
+		glEnable(GL_DEPTH_TEST);
+	
+	int gldepth_func;
+	glGetIntegerv(GL_DEPTH_FUNC,&gldepth_func);
+	glDepthFunc(GL_LEQUAL);
 		
 	int is_glblend_active;
 	glGetIntegerv(GL_BLEND,&is_glblend_active);
@@ -394,7 +414,7 @@ TEXTENGINEDEF void drawText(Font* font, const unsigned char* text, int x, int y)
 		
 			y = line + (initial_y-font->letters[(int)text[i]].top);
 			
-			glUniform2f(glGetUniformLocation(font->shader,"position"),x,y);
+			glUniform3f(glGetUniformLocation(font->shader,"position"),x,y,font->depth);
 			glUniform2f(glGetUniformLocation(font->shader,"size"),font->letters[(int)text[i]].width,font->letters[(int)text[i]].rows);
 
 			glBindTexture(GL_TEXTURE_2D,font->letters[(int)text[i]].texture);
@@ -407,8 +427,10 @@ TEXTENGINEDEF void drawText(Font* font, const unsigned char* text, int x, int y)
 		
 	}
 	
-	if(is_gldepthtest_active)
-		glEnable(GL_DEPTH_TEST);
+	if(!is_gldepthtest_active)
+		glDisable(GL_DEPTH_TEST);
+	
+	glDepthFunc(gldepth_func);
 	
 	if(temp_gl_blend_src != GL_SRC_ALPHA || temp_gl_blend_dst != GL_ONE_MINUS_SRC_ALPHA)
 		glBlendFunc(temp_gl_blend_src,temp_gl_blend_dst);
@@ -439,6 +461,8 @@ TEXTENGINEDEF Font* createFont(const char* font_name, int size){
 	glGetFloatv(GL_VIEWPORT,gl_current_view_port);
 	font->canvas_width = gl_current_view_port[2];
 	font->canvas_height = gl_current_view_port[3];
+	font->canvas_depth = 1000000;
+	font->depth = 0.0;
 	font->color_r = 1.0f;
 	font->color_g = 1.0f;
 	font->color_b = 1.0f;
@@ -460,7 +484,7 @@ TEXTENGINEDEF Font* createFont(const char* font_name, int size){
 	FT_Set_Pixel_Sizes(face,0,size);
 	glPixelStorei(GL_UNPACK_ALIGNMENT,1);
 
-	for(int i = 0; i < 255; i++){
+	for(int i = 0; i < TEXT_ENGINE_MAX_GLYPHS_COUNT; i++){
 	
 		FT_Load_Char(face,i,FT_LOAD_RENDER);
 		
@@ -494,7 +518,7 @@ TEXTENGINEDEF void drawText(Font* font, const unsigned char* text, int x, int y)
 	float gl_current_ortho[16];
 	glGetFloatv(GL_PROJECTION_MATRIX,gl_current_ortho);
 	glLoadIdentity();
-	glOrtho(0,font->canvas_width,font->canvas_height,0,-1.0,1.0);
+	glOrtho(0,font->canvas_width,font->canvas_height,0,-font->canvas_depth,font->canvas_depth);
 	glMatrixMode(GL_MODELVIEW);
 
 	int is_gltexture2d_active;
@@ -504,8 +528,21 @@ TEXTENGINEDEF void drawText(Font* font, const unsigned char* text, int x, int y)
 		
 	int is_gldepthtest_active;
 	glGetIntegerv(GL_DEPTH_TEST,&is_gldepthtest_active);
-	if(is_gldepthtest_active)
-		glDisable(GL_DEPTH_TEST);
+	if(!is_gldepthtest_active)
+		glEnable(GL_DEPTH_TEST);
+	
+	int gldepth_func;
+	glGetIntegerv(GL_DEPTH_FUNC,&gldepth_func);
+	glDepthFunc(GL_LEQUAL);
+	
+	int is_glalphatest_active;
+	glGetIntegerv(GL_ALPHA_TEST, &is_glalphatest_active);
+	if(!is_glalphatest_active)
+		glEnable(GL_ALPHA_TEST);
+	
+	int glalpha_func;
+	glGetIntegerv(GL_ALPHA_TEST_FUNC, &glalpha_func);
+	glAlphaFunc(GL_GREATER, 0.0);
 		
 	int is_glblend_active;
 	glGetIntegerv(GL_BLEND,&is_glblend_active);
@@ -523,7 +560,6 @@ TEXTENGINEDEF void drawText(Font* font, const unsigned char* text, int x, int y)
 	glColor4f(font->color_r,font->color_g,font->color_b,font->color_a);
 
 	int initial_x = x, initial_y = y, line = font->size;
-	
 	
 	glPushMatrix();
 	
@@ -549,16 +585,16 @@ TEXTENGINEDEF void drawText(Font* font, const unsigned char* text, int x, int y)
 		
 			y = line + (initial_y-font->letters[(int)text[i]].top);
 			
-			glBindTexture(GL_TEXTURE_2D,font->letters[(int)text[i]].texture); 
+			glBindTexture(GL_TEXTURE_2D,font->letters[(int)text[i]].texture);
 			glBegin(GL_QUADS);
 				glTexCoord2f(0,0);
-				glVertex2i(x,y);
+				glVertex3i(x, y, font->depth);
 				glTexCoord2f(0,1);
-				glVertex2i(x,y+font->letters[(int)text[i]].rows);
+				glVertex3i(x, y+font->letters[(int)text[i]].rows, font->depth);
 				glTexCoord2f(1,1);
-				glVertex2i(x+font->letters[(int)text[i]].width,y+font->letters[(int)text[i]].rows);
+				glVertex3i(x+font->letters[(int)text[i]].width, y+font->letters[(int)text[i]].rows, font->depth);
 				glTexCoord2f(1,0);
-				glVertex2i(x+font->letters[(int)text[i]].width,y);
+				glVertex3i(x+font->letters[(int)text[i]].width, y, font->depth);
 			glEnd();
 			glBindTexture(GL_TEXTURE_2D,0);
 			
@@ -576,8 +612,15 @@ TEXTENGINEDEF void drawText(Font* font, const unsigned char* text, int x, int y)
 	glLoadMatrixf(gl_current_ortho);
 	glMatrixMode(matrix_mode);
 	
-	if(is_gldepthtest_active)
-		glEnable(GL_DEPTH_TEST);
+	if(!is_gldepthtest_active)
+		glDisable(GL_DEPTH_TEST);
+	
+	glDepthFunc(gldepth_func);
+	
+	if(!is_glalphatest_active)
+		glDisable(GL_ALPHA_TEST);
+		
+	glAlphaFunc(glalpha_func, 0.0);
 	
 	if(temp_gl_blend_src != GL_SRC_ALPHA || temp_gl_blend_dst != GL_ONE_MINUS_SRC_ALPHA)
 		glBlendFunc(temp_gl_blend_src,temp_gl_blend_dst);
@@ -596,6 +639,10 @@ TEXTENGINEDEF void setFontFreeTransform(Font* font, int free_transform){
 	font->free_transform = free_transform;
 }
 
+TEXTENGINEDEF void setFontDepth(Font* font, float depth){
+	font->depth = depth;
+}
+
 TEXTENGINEDEF void setFontColor(Font* font, float r, float g, float b, float a){
 	font->color_r = r;
 	font->color_g = g;
@@ -603,10 +650,11 @@ TEXTENGINEDEF void setFontColor(Font* font, float r, float g, float b, float a){
 	font->color_a = a;
 }
 
-TEXTENGINEDEF void setFontCanvasSize(Font* font, int width, int height){
+TEXTENGINEDEF void setFontCanvasSize(Font* font, int width, int height, int depth){
 	font->canvas_width = width;
 	font->canvas_height = height;
-	fontCreateOrthographicMatrix(0,font->canvas_width,font->canvas_height,0,-1.0,1.0,font->projection_matrix);
+	font->canvas_depth = depth;
+	fontCreateOrthographicMatrix(0,font->canvas_width,font->canvas_height,0,-font->canvas_depth,font->canvas_depth,font->projection_matrix);
 }
 
 TEXTENGINEDEF void setTabSize(Font* font, const int tab_size){
@@ -656,7 +704,7 @@ TEXTENGINEDEF int getTextAlignRight(Font* font, const unsigned char* text, int p
 
 TEXTENGINEDEF int getTextAlignCenter(Font* font, const unsigned char* text, int position_x){
 	
-	return position_x - (getSizeText(font,text) / 2);
+	return position_x - (getSizeText(font,text) * 0.5);
 	
 }
 
