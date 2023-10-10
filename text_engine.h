@@ -28,7 +28,7 @@
 
 /*
 
-Text Engine 1.2.25 Copyright (C) Gabriel Sevilha.
+Text Engine 1.2.26 Copyright (C) Gabriel Sevilha.
 
 This is a unique header library, that serves as a fast way to draw text using OpenGL and FreeType2, and serves also as example of freetype2 library.
 
@@ -152,7 +152,11 @@ TEXTENGINEDEF void setFontScale(Font* font, float scale); //Scale is not equal a
 
 TEXTENGINEDEF void setFontScaleInPixels(Font* font, float scale_in_pixels); //Simulate pixels size on scale
 
+TEXTENGINEDEF int getTextLinesCount(const unsigned char* text);
+
 TEXTENGINEDEF int getSizeText(Font* font, const unsigned char* text);
+
+TEXTENGINEDEF int getHeightText(Font* font, const unsigned char* text);
 
 TEXTENGINEDEF int getFontHeight(Font* font); //Return font->size * font->scale_y;
 
@@ -671,6 +675,20 @@ TEXTENGINEDEF void setFontScaleInPixels(Font* font, float scale_in_pixels){
 	font->scale_y = scale_in_pixels / (float)font->size;
 }
 
+TEXTENGINEDEF int getTextLinesCount(const unsigned char* text){
+
+	int lines_count = 1;
+	
+	for(unsigned int i = 0; i < strlen((char*)text); i++){
+		if(text[i] == '\n'){
+			lines_count += 1;
+		}
+	}
+	
+	return lines_count;
+
+}
+
 TEXTENGINEDEF int getSizeText(Font* font,const unsigned char* text){
 
 	int max_width = 0;
@@ -688,6 +706,24 @@ TEXTENGINEDEF int getSizeText(Font* font,const unsigned char* text){
 	if(max_width < x) max_width = x;
 	
 	return max_width * font->scale_x;
+}
+
+TEXTENGINEDEF int getHeightText(Font* font, const unsigned char* text){
+
+	int max_height = 0;
+	
+	float line_height = font->size * font->scale_y;
+	
+	for(unsigned int i = 0; i < strlen((char*)text); i++){
+	
+		if(text[i] == '\n'){
+			max_height += line_height;
+		}
+	
+	}
+	
+	return max_height;
+
 }
 
 TEXTENGINEDEF int getFontHeight(Font* font){
