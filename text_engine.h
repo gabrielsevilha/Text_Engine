@@ -28,7 +28,7 @@
 
 /*
 
-Text Engine 1.2.26 Copyright (C) Gabriel Sevilha.
+Text Engine 1.2.27 Copyright (C) Gabriel Sevilha.
 
 This is a unique header library, that serves as a fast way to draw text using OpenGL and FreeType2, and serves also as example of freetype2 library.
 
@@ -699,7 +699,11 @@ TEXTENGINEDEF int getSizeText(Font* font,const unsigned char* text){
 		if(text[i] == '\n'){
 			if(max_width < x) max_width = x;
 			x = 0;
-		}else x += font->letters[(int)text[i]].advance>>6;
+		}else if(text[i] == '	'){
+			x += font->letters[31].width * font->tab_size;
+		}else{
+			x += font->letters[(int)text[i]].advance>>6;
+		}
 		
 	}
 	
@@ -722,7 +726,7 @@ TEXTENGINEDEF int getHeightText(Font* font, const unsigned char* text){
 	
 	}
 	
-	return max_height;
+	return max_height * font->scale_y;
 
 }
 
