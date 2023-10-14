@@ -28,7 +28,7 @@
 
 /*
 
-Text Engine 1.2.27 Copyright (C) Gabriel Sevilha.
+Text Engine 1.2.28 Copyright (C) Gabriel Sevilha.
 
 This is a unique header library, that serves as a fast way to draw text using OpenGL and FreeType2, and serves also as example of freetype2 library.
 
@@ -216,10 +216,12 @@ TEXTENGINEDEF Font* createFont(const char* font_name, int size){
 	FT_Library ft;
 	if( FT_Init_FreeType(&ft) ){
 		puts("Text Engine: Failed to init FreeType2 Library");
+		return 0;
 	}
 	FT_Face face;
 	if( FT_New_Face(ft,font_name,0,&face) ){
 		printf("Text Engine: Failed to load font: %s\n",font_name);
+		return 0;
 	}
 	FT_Set_Pixel_Sizes(face,0,size);
 	glPixelStorei(GL_UNPACK_ALIGNMENT,1);
@@ -480,10 +482,12 @@ TEXTENGINEDEF Font* createFont(const char* font_name, int size){
 	FT_Library ft;
 	if( FT_Init_FreeType(&ft) ){
 		puts("Text Engine: Failed to init FreeType2 Library");
+		return 0;
 	}
 	FT_Face face;
 	if( FT_New_Face(ft,font_name,0,&face) ){
 		printf("Text Engine: Failed to load font: %s\n",font_name);
+		return 0;
 	}
 	FT_Set_Pixel_Sizes(face,0,size);
 	glPixelStorei(GL_UNPACK_ALIGNMENT,1);
