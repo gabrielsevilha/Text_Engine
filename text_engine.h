@@ -28,7 +28,7 @@
 
 /*
 
-Text Engine 1.2.28 Copyright (C) Gabriel Sevilha.
+Text Engine 1.2.29 Copyright (C) Gabriel Sevilha.
 
 This is a unique header library, that serves as a fast way to draw text using OpenGL and FreeType2, and serves also as example of freetype2 library.
 
@@ -101,7 +101,7 @@ Exemple compiled on linux with: -lglfw -lGL `pkg-config --cflags --libs freetype
 	#endif
 #endif
 
-#ifndef TEXT_ENGINE_MAX_GLYPHS_COUNT 
+#ifndef TEXT_ENGINE_MAX_GLYPHS_COUNT
 #define TEXT_ENGINE_MAX_GLYPHS_COUNT 512
 #endif
 
@@ -137,6 +137,10 @@ typedef struct{
 TEXTENGINEDEF Font* createFont(const char* font_name, int size);
 
 TEXTENGINEDEF void drawText(Font* font, const unsigned char* text, int x, int y);
+
+TEXTENGINEDEF void drawCenteredText(Font* font, const unsigned char* text, int x, int y);
+
+TEXTENGINEDEF void drawRightedText(Font* font, const unsigned char* text, int x, int y);
 
 TEXTENGINEDEF void setFontFreeTransform(Font* font, int free_transform); //Able you to change font->matrix_transform variable by yourself.
 
@@ -641,7 +645,17 @@ TEXTENGINEDEF void drawText(Font* font, const unsigned char* text, int x, int y)
 
 }
 
+
+
 #endif //#else TEXT_ENGINE_USE_MODERN_OPENGL
+
+TEXTENGINEDEF void drawCenteredText(Font* font, const unsigned char* text, int x, int y){
+	drawText(font, text, x - getSizeText(font, text) * 0.5, y);
+}
+
+TEXTENGINEDEF void drawRightedText(Font* font, const unsigned char* text, int x, int y){
+	drawText(font, text, x - getSizeText(font, text), y);
+}
 
 TEXTENGINEDEF void setFontFreeTransform(Font* font, int free_transform){
 	font->free_transform = free_transform;
