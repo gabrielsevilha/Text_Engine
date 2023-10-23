@@ -28,7 +28,7 @@
 
 /*
 
-Text Engine 1.2.29 Copyright (C) Gabriel Sevilha.
+Text Engine 1.2.30 Copyright (C) Gabriel Sevilha.
 
 This is a unique header library, that serves as a fast way to draw text using OpenGL and FreeType2, and serves also as example of freetype2 library.
 
@@ -167,6 +167,8 @@ TEXTENGINEDEF int getFontHeight(Font* font); //Return font->size * font->scale_y
 TEXTENGINEDEF int getTextAlignRight(Font* font, const unsigned char* text, int position_x);
 
 TEXTENGINEDEF int getTextAlignCenter(Font* font, const unsigned char* text, int position_x);
+
+TEXTENGINEDEF int getTextAABB(Font* font, const unsigned char* text, int text_x, int text_y, int x, int y, int w, int h, int text_align);
 
 //Internal Math Functions
 TEXTENGINEDEF void fontMultiplyMatrix4x4(float* m1, float* m2, float* dest);
@@ -707,7 +709,7 @@ TEXTENGINEDEF int getTextLinesCount(const unsigned char* text){
 
 }
 
-TEXTENGINEDEF int getSizeText(Font* font,const unsigned char* text){
+TEXTENGINEDEF int getSizeText(Font* font, const unsigned char* text){
 
 	int max_width = 0;
 	int x = 0;
@@ -732,14 +734,12 @@ TEXTENGINEDEF int getSizeText(Font* font,const unsigned char* text){
 
 TEXTENGINEDEF int getHeightText(Font* font, const unsigned char* text){
 
-	int max_height = 0;
-	
-	float line_height = font->size * font->scale_y;
+	int max_height = font->size;
 	
 	for(unsigned int i = 0; i < strlen((char*)text); i++){
 	
 		if(text[i] == '\n'){
-			max_height += line_height;
+			max_height += font->size;
 		}
 	
 	}
@@ -764,6 +764,21 @@ TEXTENGINEDEF int getTextAlignCenter(Font* font, const unsigned char* text, int 
 	
 	return position_x - (getSizeText(font,text) * 0.5);
 	
+}
+
+TEXTENGINEDEF int getTextAABB(Font* font, const unsigned char* text, int text_x, int text_y, int x, int y, int w, int h, int text_align){
+
+	int text_position_x = text_x;
+	int text_width = getSizeText(font, text);
+	
+	if(text_align == 1){ //ALIGN_CENTERED
+		text_position_x -= text_width * 0.5;
+	}else if(text_align == 2){ //ALIGN_RIGHTED
+		text_position_x -= text_width;
+	}
+
+	return (x + w > text_position_x && x < text_position_x + text_width && y + h > text_y && y < text_y + getHeightText(font, text));
+
 }
 
 
