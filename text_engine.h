@@ -30,6 +30,8 @@
 
 Text Engine 1.2.30 Copyright (C) Gabriel Sevilha.
 
+Library created for personal use, but if you like it you can use it too.
+
 This is a unique header library, that serves as a fast way to draw text using OpenGL and FreeType2, and serves also as example of freetype2 library.
 
 Dependences: OpenGL 1.1+ and freetype2
