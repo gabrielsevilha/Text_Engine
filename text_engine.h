@@ -1,5 +1,5 @@
 /*
-	Text Engine 1.2.30 Copyright (C) Gabriel Sevilha.
+	Text Engine 1.2.30 Copyright (C) Gabriel Sevilha (Gabriel Sevilha de Aguiar).
 
 	Library created and developed by Gabriel Sevilha for his own use, but if you like it, you can use it too.
 
